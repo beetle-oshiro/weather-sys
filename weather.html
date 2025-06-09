@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>weather</title>
+</head>
+
+<body>
+    <!-- 都市が入力されるテキストボックス　placeholderは入力前に薄く表示される -->
+    <input type="text" id="id_city" placeholder="都市名を入力">
+    <!-- 天気を取得するためのボタン　JavaScriptが動くトリガーになっている -->
+    <button id="id_btn">天気を取得</button>
+    <!-- 都市の天気情報が表示される部分 -->
+    <div id="id_result"></div>
+
+    <script>
+        window.addEventListener("DOMContentLoaded", init);      //htmlが全て読み終わった後でinitを実行させる
+
+        function init() {
+
+            // 「天気を取得ボタン」のイベント　非同期通信（fetch）を使うから「async」を付ける→中で「await」が使えるようになる
+            document.getElementById("id_btn").addEventListener("click", async () => {
+                // 入力された文字が半角アルファベットかをチェックする
+                const input = document.getElementById("id_city");
+                const city = input.value.trim();                    //「.trim()は前後のスペースを削除（空白のミス防止）」
+                const alphabet_check = /^[a-zA-Z]+$/.test(city);
+
+                if (!alphabet_check) {
+                    alert("都市名は半角アルファベットで入力してください！");
+                    return;
+                }
+
+                const result = document.getElementById("id_result");
+                result.innerHTML = "🔄 調べています...";
+
+                const apiKey = "f16a0932e81de680d52be30e43ff82da"; // ここにAPIキーを入れる
+                const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=ja`;
+
+                try {
+                    // ここから先でデータを取りにいくので、少し待ってもらう（レスポンス待ち）
+                    const response = await fetch(url);
+                    //  「response.ok」には「true or false」が返ってくるのでif文で調べる    
+                    if (!response.ok) {
+                        throw new Error("データ取得に失敗しました。");  //Errorオブジェクトを作成してmessageプロパティに()内の文言を入れる
+                    }
+
+                    const data = await response.json();     //サーバーから返ってきたJSON形式のデータをオブジェクト形式に変換して「data」に入れる
+                    const temp = data.main.temp;            //データの中から「main.temp」(気温)を取り出す
+                    const weather = data.weather[0].description;    //データの中から「weather[0].description」（天気）を取り出す
+
+                    result.innerHTML = `🌡️ 気温：${temp}℃<br>☁️ 天気：${weather}`;      //ブラウザに気温と天気を表示
+                } catch (error) {
+                    result.innerHTML = `⚠️ エラー: ${error.message}`;                   //try内の処理で発生したエラーをブラウザに表示
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>
